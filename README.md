@@ -7,6 +7,19 @@ A conversational assistant for the **manufacturing department only**. It answers
 - **Live app:** https://pdca-insights-reporter.vercel.app (no sign-in)
 - **Miro opportunity board:** https://miro.com/app/board/uXjVERlQarI=/
 
+## Project deliverables
+
+| # | Deliverable | File |
+|---|---|---|
+| 1 | User research worksheet | [deliverables/1. Problem Discovery and User Research.xlsx](deliverables/) |
+| 2 | AI opportunity map | [deliverables/2. AI Opportunity Mapping.xlsx](deliverables/) and the [Miro board](https://miro.com/app/board/uXjVERlQarI=/) |
+| 3 | AI PRD | [deliverables/3. AI PRD - PDCA Insights Reporter.docx](deliverables/) |
+| 4 | Cost estimation (measured tokens) | [deliverables/4. Cost Estimation - PDCA Insights Reporter.xlsx](deliverables/) |
+| 5 | Working prototype | this repository (code + README), live at https://pdca-insights-reporter.vercel.app |
+| 6 | Presentation | [deliverables/6. Presentation - PDCA Insights Reporter.pptx](deliverables/) |
+
+All persona details, quotes, plant data and business figures in these files are synthetic, made up for the course project.
+
 ## What it does (MVP)
 
 | Feature | Example question | How it answers |
@@ -90,4 +103,5 @@ data/       synthetic PDCA and KPI data
 evals/      dev and held-out sets
 public/     index.html chat UI
 scripts/    data generator, eval builder, tool tests
+deliverables/ course deliverables 1-4 and 6 (xlsx, docx, pptx)
 ```

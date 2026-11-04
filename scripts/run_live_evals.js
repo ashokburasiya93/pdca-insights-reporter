@@ -5,12 +5,16 @@ const BASE = process.argv[2] || "https://pdca-insights-reporter.vercel.app";
 const which = process.argv[3] || "all", B = Number(process.argv[4] || 4), GAP = Number(process.argv[5] || 0); // GAP ms between batches keeps free-tier tokens-per-minute limits
 const p95 = (a) => { const s = a.slice().sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(0.95 * s.length) - 1)] || 0; };
 async function runSet(set) {
-  const results = []; let from = 0, total = Infinity;
+  // Results are appended to eval_<set>.jsonl after every batch, so an interrupted run resumes where it stopped.
+  const file = `eval_${set}.jsonl`;
+  const results = fs.existsSync(file) ? fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
+  let from = results.length, total = Infinity;
   while (from < total) {
     let j;
     for (let t = 0; t < 3; t++) { try { const r = await fetch(`${BASE}/api/evals?set=${set}&from=${from}&n=${B}`); j = await r.json(); if (j.results) break; console.error("batch error", r.status, JSON.stringify(j).slice(0, 300)); } catch (e) { console.error("fetch error", e.message); } await new Promise((r) => setTimeout(r, 5000)); }
     if (!j || !j.results) throw new Error(`batch ${set}@${from} failed`);
     total = j.total_in_set; results.push(...j.results); from += B;
+    fs.appendFileSync(file, j.results.map((r) => JSON.stringify(r)).join("\n") + "\n");
     if (GAP && j.results.some((r) => r.state !== "declined")) await new Promise((r) => setTimeout(r, GAP));
     process.stderr.write(`${set} ${Math.min(from, total)}/${total}\n`);
   }

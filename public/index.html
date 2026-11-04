@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PDCA Insights Reporter</title>
+<meta name="description" content="Conversational PDCA insights for the manufacturing department. Synthetic data.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1b1f24;--muted:#5b6470;--line:#e2e6ea;--accent:#1f5fbf;--accent-soft:#e8f0fc;--good:#167a3e;--warn:#9a5b00;--bad:#b42318}
+@media (prefers-color-scheme:dark){:root{--bg:#121417;--card:#1b1e23;--ink:#e8eaed;--muted:#a0a8b3;--line:#2c3138;--accent:#7aa7f0;--accent-soft:#1d2a40;--good:#5fc489;--warn:#e0a64a;--bad:#f08178}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px;position:sticky;top:0;z-index:2}
+.top{max-width:880px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+h1{font-size:18px;margin:0}h1 small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+.badges{display:flex;gap:8px;flex-wrap:wrap}.badge{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--muted);background:var(--bg)}
+.badge.model{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}.badge.syn{color:var(--warn);border-color:var(--warn)}
+main{max-width:880px;margin:0 auto;padding:16px 16px 140px}
+.intro{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.intro p{margin:0 0 10px}.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.msg{margin:12px 0;display:flex}.msg.user{justify-content:flex-end}
+.bubble{max-width:100%;border-radius:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);overflow-x:auto}
+.user .bubble{background:var(--accent);color:#fff;border-color:var(--accent);max-width:80%}
+.bubble table{border-collapse:collapse;margin:8px 0;font-size:13px}.bubble th,.bubble td{border:1px solid var(--line);padding:4px 8px;text-align:left}
+.bubble p{margin:6px 0}.bubble ul,.bubble ol{margin:6px 0;padding-left:20px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;font-size:12px;color:var(--muted);align-items:center}
+.tag{border-radius:6px;padding:2px 8px;background:var(--bg);border:1px solid var(--line)}
+.tag.ok{color:var(--good)}.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}
+details{margin-top:8px;font-size:12px}summary{cursor:pointer;color:var(--accent)}pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:8px;border-radius:8px;max-height:280px;overflow:auto}
+.fb button{border:1px solid var(--line);background:var(--card);border-radius:6px;cursor:pointer;padding:1px 8px;color:var(--muted)}.fb button.on{color:var(--accent);border-color:var(--accent)}
+form{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 16px}
+.row{max-width:880px;margin:0 auto;display:flex;gap:8px}
+textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;background:var(--bg);color:var(--ink);min-height:44px;max-height:120px}
+button.send{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:0 18px;font-weight:600;cursor:pointer}button.send:disabled{opacity:.5}
+.foot{max-width:880px;margin:6px auto 0;font-size:11px;color:var(--muted)}
+.typing{color:var(--muted);font-style:italic}
+</style>
+</head>
+<body>
+<header><div class="top">
+  <h1>PDCA Insights Reporter<small>Manufacturing department only · read-only · answers cite PDCA record IDs</small></h1>
+  <div class="badges"><span class="badge syn">Synthetic data</span><span class="badge" id="asof">Data as of …</span><span class="badge model" id="model">Model: checking…</span></div>
+</div></header>
+<main id="chat">
+  <div class="intro">
+    <p>Ask about PDCA cycles, overdue actions, whether a countermeasure worked, similar past problems, or get the weekly brief. Numbers are computed by code from the plant's PDCA data; the AI only explains them.</p>
+    <div class="chips" id="chips"></div>
+  </div>
+</main>
+<form id="f"><div class="row"><textarea id="q" rows="1" placeholder="e.g. Which cycles are stuck in Check on Line 2?" maxlength="600"></textarea><button class="send" id="send">Ask</button></div>
+<div class="foot">Prototype for a course project. All plant data, people and numbers are synthetic (made up). Not for real production decisions.</div></form>
+<script>
+const SAMPLES=["Which cycles are stuck in Check for more than 14 days?","How many actions are overdue, and who owns them?","Did the countermeasure in PDCA-017 work?","We have pinholes in welds on the side frame. Have we seen this before?","Give me the weekly PDCA brief for the plant head.","Show the scrap trend on Line 2 for the last 8 weeks.","What weld current should I set?","What is the salary band for a supervisor?"];
+const $=s=>document.querySelector(s), chat=$("#chat"), hist=[];
+SAMPLES.forEach(s=>{const b=document.createElement("button");b.className="chip";b.type="button";b.textContent=s;b.onclick=()=>ask(s);$("#chips").appendChild(b)});
+fetch("/api/health").then(r=>r.json()).then(h=>{$("#asof").textContent="Data as of "+h.as_of;const m=h.models.filter(x=>x.configured);$("#model").textContent=m.length?("Model: "+m[0].model+" ("+m[0].provider+")"+(m[1]?" · fallback "+m[1].provider:"")):"Model: not configured"}).catch(()=>{$("#model").textContent="Model: unavailable"});
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function add(role,html){const d=document.createElement("div");d.className="msg "+role;d.innerHTML='<div class="bubble">'+html+'</div>';chat.appendChild(d);d.scrollIntoView({behavior:"smooth",block:"end"});return d.firstChild}
+const STATE={answer:["Grounded answer","ok"],not_in_data:["Not in the data","warn"],insufficient_evidence:["Insufficient evidence","warn"],declined:["Declined (out of scope)","warn"],grounding_failed:["Could not verify; raw data shown","bad"],error:["Error","bad"]};
+async function ask(q){q=(q||"").trim();if(!q)return;$("#q").value="";$("#send").disabled=true;add("user",esc(q));const b=add("bot",'<span class="typing">Checking the PDCA data…</span>');
+ try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,history:hist.slice(-4)})}).then(x=>x.json());
+  const st=STATE[r.state]||[r.state,"warn"];
+  let html=DOMPurify.sanitize(marked.parse(r.answer||""));
+  html+='<div class="meta"><span class="tag '+st[1]+'">'+st[0]+'</span>'+(r.model?'<span class="tag">'+esc(r.model)+(r.fallback_used?' · fallback':'')+'</span>':'')+(r.as_of?'<span class="tag">as of '+r.as_of+'</span>':'')+(r.latency_ms?'<span class="tag">'+(r.latency_ms/1000).toFixed(1)+' s</span>':'')+'<span class="fb"><button type="button" title="Helpful">👍</button> <button type="button" title="Not helpful">👎</button></span></div>';
+  if(r.tool_calls&&r.tool_calls.length)html+='<details><summary>Evidence: '+r.tool_calls.map(t=>esc(t.name)).join(", ")+'</summary><pre>'+esc(JSON.stringify({tool_calls:r.tool_calls,results:r.evidence,grounding:r.grounding},null,1)).slice(0,20000)+'</pre></details>';
+  b.innerHTML=html;b.querySelectorAll(".fb button").forEach((x,i)=>x.onclick=()=>{b.querySelectorAll(".fb button").forEach(y=>y.classList.remove("on"));x.classList.add("on");try{const k="pdca_fb";const a=JSON.parse(localStorage.getItem(k)||"[]");a.push({q,v:i?-1:1,t:Date.now()});localStorage.setItem(k,JSON.stringify(a))}catch(e){}});
+  if(r.model){$("#model").textContent="Model: "+r.model}
+  hist.push({role:"user",content:q},{role:"assistant",content:(r.answer||"").slice(0,800)});
+ }catch(e){b.innerHTML='<span class="tag bad">Error</span> Could not reach the server. No answer was guessed.'}
+ $("#send").disabled=false;b.scrollIntoView({behavior:"smooth",block:"end"})}
+$("#f").onsubmit=e=>{e.preventDefault();ask($("#q").value)};
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask($("#q").value)}});
+</script>
+</body></html>

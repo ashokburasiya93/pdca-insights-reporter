@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "Conversational PDCA insights for the manufacturing department (synthetic data).",
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node scripts/test_tools.js" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node scripts/test_tools.js",
+    "build": "node scripts/fetch_data.js"
+  }
 }

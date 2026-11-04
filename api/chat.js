@@ -1,7 +1,8 @@
-const { answer } = require("../lib/agent");
+const { load } = require("./_boot");
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   try {
+    const { answer } = await load("agent.js");
     let q, history;
     if (req.method === "POST") { const b = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {}; q = b.message; history = b.history; }
     else { q = req.query.q; }

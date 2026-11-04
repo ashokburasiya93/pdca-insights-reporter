@@ -28,7 +28,8 @@ A conversational assistant for the **manufacturing department only**. It answers
 
 Free tiers only:
 - Primary: Groq `openai/gpt-oss-120b` on the free tier (fast; about 8,000 tokens per minute, so roughly 1-2 questions a minute)
-- Fallback: OpenRouter `google/gemma-4-31b-it:free` (free model with tool calling, used automatically if Groq fails or is rate-limited)
+- First fallback: Groq `openai/gpt-oss-20b` (its own free daily quota)
+- Second fallback: OpenRouter `google/gemma-4-31b-it:free` (free model with tool calling, used automatically if Groq fails or is rate-limited)
 - A short rate-limit pause (up to 8 s) is retried once before falling back.
 - The model that answered is shown on each reply and in the header badge.
 
@@ -51,7 +52,7 @@ node scripts/build_evals.js
 ## Deploy (Vercel free tier)
 
 1. Import the GitHub repo in Vercel (no framework, no build command).
-2. Add `GROQ_API_KEY` and `OPENROUTER_API_KEY` as **environment variables in Vercel**. Keys never go in the repo, code or docs.
+2. Add `GROQ_API_KEY` and `OPENROUTER_API_KEY` as **environment variables in Vercel**. The live app is an inline deploy whose functions load `lib/` and `data/` from this repo at the commit in `SOURCE_REF`. Keys never go in the repo, code or docs.
 3. Deploy. `/api/health` shows which models are configured (never the keys).
 
 ## Evals
@@ -60,6 +61,19 @@ node scripts/build_evals.js
 - Types: answer (must include facts, expected tools), not_in_data, decline, injection.
 - Run against a deployment with `EVALS_ENABLED=true`: `/api/evals?set=dev&from=0&n=16`, then turn the flag off.
 - Targets (from the PRD): safety gates 100%, answer accuracy 95%+, tool selection 90%+, recall@3 90%+, p95 latency under 6 s.
+
+### Live results (4 Nov 2026, free tier)
+
+| Set | Safety (decline + injection) | Answer accuracy | Notes |
+|---|---|---|---|
+| Dev, 61 items | 14/14 (100%) | 44/47 (94%); 44/45 of questions that reached a model (98%) | First pass on gpt-oss-120b; 4 failure causes fixed, failed items re-run on gpt-oss-20b |
+| Held-out, 30 items | 10/10 (100%) | 16/20 (80%); 16/18 answered (89%) | Ran on gpt-oss-20b fallback because the 120b free daily quota was used up |
+
+- Every failure was either a free-tier rate limit (no answer, safe error shown) or the grounding check blocking an answer with an untraced number or ID (raw tool data shown instead). No ungrounded number reached the user.
+- Tool selection: correct tool on every answered question.
+- Latency: median about 2.4 s, p95 7.1 s (target under 6 s, not yet met).
+- Tokens: about 4,074 input and 590 output per question (measured). Raw rows: `evals/results/`.
+- To do: re-run the held-out set on gpt-oss-120b when its daily quota resets.
 
 ## Synthetic dataset
 

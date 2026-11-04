@@ -1,0 +1,16 @@
+# Re-run of failed/blocked dev items after fixes, 2026-11-04 15:28-15:36 UTC, commit 5ca3ce4
+id,type,state,pass,tool_ok,latency_ms,prompt_tokens,completion_tokens,model
+dev-03,a,answ,1,1,3376,3613,496,20b
+dev-12,a,answ,1,1,2698,3386,411,20b
+dev-14,a,erro,0,0,1325,0,0,-
+dev-37,a,answ,1,1,1929,3559,411,20b
+dev-38,a,answ,1,1,1964,3889,690,20b
+dev-39,a,answ,1,1,4010,3504,346,20b
+dev-40,a,answ,1,1,1706,4644,487,20b
+dev-41,a,erro,0,0,1956,0,0,-
+dev-42,a,answ,1,1,3471,3190,195,20b
+dev-43,a,grou,0,1,7661,6765,2172,20b
+dev-44,a,answ,1,1,5272,3853,739,20b
+dev-45,a,answ,1,1,1661,3477,715,20b
+dev-46,n,not_,1,1,1028,3004,196,20b
+dev-47,n,not_,1,1,1190,3033,194,20b

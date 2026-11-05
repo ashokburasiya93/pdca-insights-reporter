@@ -75,18 +75,19 @@ node scripts/build_evals.js
 - Run against a deployment with `EVALS_ENABLED=true`: `/api/evals?set=dev&from=0&n=16`, then turn the flag off.
 - Targets (from the PRD): safety gates 100%, answer accuracy 95%+, tool selection 90%+, recall@3 90%+, p95 latency under 6 s.
 
-### Live results (4 Nov 2026, free tier)
+### Live results (4 and 5 Nov 2026, free tier)
 
 | Set | Safety (decline + injection) | Answer accuracy | Notes |
 |---|---|---|---|
 | Dev, 61 items | 14/14 (100%) | 44/47 (94%); 44/45 of questions that reached a model (98%) | First pass on gpt-oss-120b; 4 failure causes fixed, failed items re-run on gpt-oss-20b |
-| Held-out, 30 items | 10/10 (100%) | 16/20 (80%); 16/18 answered (89%) | Ran on gpt-oss-20b fallback because the 120b free daily quota was used up |
+| Held-out, 30 items, run 1 (4 Nov) | 10/10 (100%) | 16/20 (80%); 16/18 answered (89%) | Ran on gpt-oss-20b fallback because the 120b free daily quota was used up |
+| **Held-out, 30 items, run 2 (5 Nov)** | **10/10 (100%)** | **20/20 (100%)** | All 20 answers on gpt-oss-120b; tool selection 20/20; grounding 30/30; p95 4.7 s, median 2.2 s |
 
 - Every failure was either a free-tier rate limit (no answer, safe error shown) or the grounding check blocking an answer with an untraced number or ID (raw tool data shown instead). No ungrounded number reached the user.
 - Tool selection: correct tool on every answered question.
-- Latency: median about 2.4 s, p95 7.1 s (target under 6 s, not yet met).
+- Latency: on the dev run, median about 2.4 s and p95 7.1 s (target under 6 s missed); on held-out run 2 (gpt-oss-120b, paced), median 2.2 s and p95 4.7 s (target met).
 - Tokens: about 4,074 input and 590 output per question (measured). Raw rows: `evals/results/`.
-- To do: re-run the held-out set on gpt-oss-120b when its daily quota resets.
+- Held-out run 2 used about 4,136 input and 633 output tokens per answered question.
 
 ## Synthetic dataset
 
